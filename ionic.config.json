@@ -1,0 +1,8 @@
+{
+  "name": "Brainhome",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "angular",
+  "id": "2319592d"
+}
