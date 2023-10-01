@@ -1,70 +1,104 @@
-import { Component, OnInit } from '@angular/core';
-import { BLE } from '@awesome-cordova-plugins/ble/ngx';
+import { AfterViewInit, Component, ElementRef, ViewChild } from '@angular/core';
+import { BluetoothSerial } from '@awesome-cordova-plugins/bluetooth-serial/ngx';
+import { timer } from 'rxjs';
 
 @Component({
   selector: 'app-bluetooth',
   templateUrl: './bluetooth.page.html',
   styleUrls: ['./bluetooth.page.scss'],
 })
-export class BluetoothPage implements OnInit {
 
-  private eegData: Uint8Array = new Uint8Array(100);
-  private eegDataIndex: number = 0;
+export class BluetoothPage implements AfterViewInit {
 
-  constructor(private ble: BLE) {}
+  @ViewChild('brainButton', { read: ElementRef }) brainButton!: ElementRef<HTMLButtonElement>;
 
-  ngOnInit() {
+  connected = false;
+  // @ViewChild('brainButton') brainButton:ElementRef;
+
+  constructor(private bluetoothSerial: BluetoothSerial) { }
+
+  ngAfterViewInit(): void {
+    this.updateBoarderButton();
+    this.discoverBluetoothDevices();
   }
 
-  scanForBLEDevices() {
-    this.ble.scan([], 5).subscribe(
-      device => {
-        console.log('Discovered device name:', device.name);
-        if(device.name == "Brainhome EEG") {
-          this.connectToDevice(device);
+  
+  discoverBluetoothDevices() {
+    this.bluetoothSerial.list().then(
+      (devices) => {
+        var found = false;
+        // List of available Bluetooth devices
+        console.log(devices);
+        for(let device of devices){
+          if(device.name == "Brainhome EEG"){
+            this.connectToDevice(device.address);
+            found = true;
+          }
         }
-      },
-      error => console.error('Error scanning for devices:', error)
-    );
-  }
+        if(!found){
+          const delayMilliseconds = 2000;
 
-  connectToDevice(device: any) {
-    this.ble.connect(device.id).subscribe(
-      (peripheral) => {
-        console.log('Connected to BLE device:', peripheral);
-        // Handle successful connection
-        if(device.name == "Brainhome EEG") {
-          this.subscribeToService(device.id, "6E400001-B5A3-F393-E0A9-E50E24DCCA9E", "6E400003-B5A3-F393-E0A9-E50E24DCCA9E");
+          timer(delayMilliseconds).subscribe(() => {
+            this.discoverBluetoothDevices();
+          });
         }
       },
-      (peripheral) => {
-        console.log('Disconnected from BLE device:', peripheral);
-        // Handle connection error
+      (error) => {
+        console.error('Error discovering devices:', error);
       }
     );
   }
 
-  subscribeToService(deviceId: string, serviceUuid: string, characteristicUuid: string) {
-    this.ble.startNotification(deviceId, serviceUuid, characteristicUuid).subscribe(
-      (data) => {
-        const receivedData = new Uint8Array(data[0]);
-        for(let i = 0; i < receivedData.length; i++) {
-          this.eegData[this.eegDataIndex] = receivedData[i];
-          this.eegDataIndex++;
-          if(this.eegDataIndex == 100) {
-            this.eegDataIndex = 0;
-            console.log('received all the data: ', this.eegData);
+  connectToDevice(deviceAddress: string) {
+    this.bluetoothSerial.connect(deviceAddress).subscribe(
+      (success) => {
+        console.log('Connected to device:', deviceAddress);
+        this.connected = true;
+        this.updateBoarderButton();
+        // Start reading data from the connected device
+        this.bluetoothSerial.subscribe('\n').subscribe(
+          (data) => {
+            console.log('Received data: ', data.charAt(0));
+          },
+          (error) => {
+            console.error('Error receiving data:', error);
           }
-        }
-        // console.log('Array length:', receivedData.length);
-        // console.log('Received data from BLE device:', data);
-        // Handle received data
+        );
+      },
+      (error) => {
+        console.error('Error connecting to device:', error);
+        this.connected = false;
+        this.updateBoarderButton();
+        this.discoverBluetoothDevices();
+      }
+    );
+  }
+
+  sendData(data: string) {
+    this.bluetoothSerial.write(data).then(
+      (success) => {
+        console.log('Data sent successfully:', data);
+      },
+      (error) => {
+        console.error('Error sending data:', error);
       }
     );
   }
 
   printToConsole() {
     console.log("Hello World!");
+    this.connected = !this.connected;
+    this.updateBoarderButton();
+  }
+
+  updateBoarderButton() {
+    if(this.brainButton){
+      if(this.connected){
+        document.documentElement.style.setProperty('--connectedColor', '#43B02A');
+      }else{
+        document.documentElement.style.setProperty('--connectedColor', '#F26247');
+      }
+    }
   }
 
 }

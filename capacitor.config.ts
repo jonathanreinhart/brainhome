@@ -5,7 +5,7 @@ const config: CapacitorConfig = {
   appName: 'Brainhome',
   webDir: 'www',
   server: {
-    androidScheme: 'https'
+    url: 'http://192.168.188.23:8100'
   }
 };
 

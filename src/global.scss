@@ -25,9 +25,10 @@
 @import "@ionic/angular/css/text-transformation.css";
 @import "@ionic/angular/css/flex-utils.css";
 
-.flex-center{
+.flex-container{
     display: flex;
     justify-content: center;
     align-items: center;
+    flex-direction: column; /* Rows will be arranged vertically */
     height: 100%;
 }

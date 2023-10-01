@@ -8,8 +8,9 @@
 </ion-header>
 
 <ion-content [fullscreen]="true">
-  <div class="flex-center">
-    <ion-button (click)="printToConsole()">Test</ion-button>
-    <ion-button (click)="scanForBLEDevices()">Scan</ion-button>
+  <div class="flex-container">
+    <ion-button #brainButton class="brain-button">
+      <ion-img src="assets/brain.png" class="brain-logo"></ion-img>
+    </ion-button>
   </div>
 </ion-content>

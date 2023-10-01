@@ -8,7 +8,7 @@ import { BluetoothPageRoutingModule } from './bluetooth-routing.module';
 
 import { BluetoothPage } from './bluetooth.page';
 
-import { BLE } from '@awesome-cordova-plugins/ble/ngx';
+import { BluetoothSerial } from '@awesome-cordova-plugins/bluetooth-serial/ngx';
 
 @NgModule({
   imports: [
@@ -18,7 +18,7 @@ import { BLE } from '@awesome-cordova-plugins/ble/ngx';
     BluetoothPageRoutingModule
   ],
   declarations: [BluetoothPage],
-  providers: [BLE]
+  providers: [BluetoothSerial]
 })
 export class BluetoothPageModule {
   
